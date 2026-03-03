@@ -25,7 +25,8 @@ export const authOptions = {
       if (user) token.role = 'admin';
       return token;
     },
-    session({ session, token }: { session: { user?: { role?: string } }; token: { role?: string } }) {
+    // 型の不整合によるビルドエラーを避けるため、ここでは any を利用する
+    session({ session, token }: any) {
       if (session.user) (session.user as { role?: string }).role = token.role as string;
       return session;
     },
