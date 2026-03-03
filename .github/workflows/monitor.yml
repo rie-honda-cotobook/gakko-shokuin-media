@@ -1,10 +1,10 @@
-# 大学採用ページ監視ジョブ（6時間ごと）
-# 必要な secrets: MONITOR_RUN_TOKEN, DATABASE_URL 等（または self-hosted で .env を用意）
+# 大学採用ページ監視ジョブ（24時間に1回）
+# 必要な secrets: SITE_URL, MONITOR_RUN_TOKEN（方法A）など
 name: Monitor
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # 0時, 6時, 12時, 18時 (UTC)
+    - cron: '0 0 * * *'  # 毎日 0:00 UTC = 日本時間 9:00
   workflow_dispatch:
 
 jobs:
