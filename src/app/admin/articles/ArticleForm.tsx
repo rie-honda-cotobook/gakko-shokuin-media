@@ -61,9 +61,10 @@ export function ArticleForm({
       ...form,
       status: action === 'draft' ? 'draft' : action === 'publish' ? 'published' : 'scheduled',
     };
-    const result = articleId
-      ? await updateArticle(articleId, data)
-      : await createArticle(data);
+    
+    const result: { ok: boolean; error?: string; id?: string } = articleId
+  ? await updateArticle(articleId, data)
+  : await createArticle(data);
     if (!result.ok) {
       setError(result.error || 'エラー');
       setLoading(false);
