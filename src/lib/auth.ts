@@ -34,6 +34,6 @@ export const authOptions = {
   pages: { signIn: '/admin/login' },
   session: { strategy: 'jwt' as const, maxAge: 24 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
-};
+} as any;
 
 export default NextAuth(authOptions);
