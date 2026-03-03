@@ -1,0 +1,46 @@
+# 大学採用ページ監視ジョブ（6時間ごと）
+# 必要な secrets: MONITOR_RUN_TOKEN, DATABASE_URL 等（または self-hosted で .env を用意）
+name: Monitor
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 0時, 6時, 12時, 18時 (UTC)
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Prisma generate
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # 方法A: API で実行（Vercel 等にデプロイしている場合）
+      - name: Trigger monitor API
+        run: |
+          curl -s -X POST "${{ secrets.SITE_URL }}/api/monitor/run" \
+            -H "Authorization: Bearer ${{ secrets.MONITOR_RUN_TOKEN }}" \
+            -H "Content-Type: application/json"
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+
+      # 方法B: スクリプトで実行（DB に直接接続する場合。方法A とどちらか一方を使用）
+      # - name: Run monitor script
+      #   run: npx tsx scripts/monitor.ts
+      #   env:
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     SITE_URL: ${{ secrets.SITE_URL }}
+      #     SLACK_ACTION_TOKEN: ${{ secrets.SLACK_ACTION_TOKEN }}

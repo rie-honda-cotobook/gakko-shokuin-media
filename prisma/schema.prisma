@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Author {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  role         String    // 例：元大学職員、キャリア支援など
+  bio          String?
+  credentials  String?   // 経歴/実績（テキスト）
+  avatarUrl    String?
+  social       String?   // JSON: { twitter?, linkedin?, ... }
+  isSupervisor Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  articles     Article[]
+}
+
+model Article {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  excerpt       String?
+  content       String    // Markdown
+  status        String    @default("draft") // draft | scheduled | published
+  publishedAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+  category      String?
+  tags         String?   // JSON string array
+  seoTitle      String?
+  seoDescription String
+  ogImageUrl    String?
+  authorId      String
+  author        Author    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  faq           String?   // JSON: [{q,a}]
+  references    String?   // JSON: 参考リンクの配列
+}
+
+model Job {
+  id             String   @id @default(cuid())
+  title          String
+  schoolName     String
+  area           String   // 関東/東京 など
+  employmentType String?
+  deadline       DateTime?
+  officialUrl    String
+  summary        String?
+  updatedAt      DateTime @updatedAt
+}
+
+// 監視: 大学採用ページ
+model MonitorPage {
+  id                  String    @id @default(cuid())
+  universityName      String
+  url                 String    @unique
+  area                String?
+  isActive            Boolean   @default(true)
+  checkIntervalHours  Int       @default(24)
+  lastCheckedAt       DateTime?
+  lastStatusCode      Int?
+  lastEtag            String?
+  lastModified        String?
+  lastContentHash     String?
+  lastChangeAt        DateTime?
+  consecutiveErrors   Int       @default(0)
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  events              MonitorEvent[]
+}
+
+// 監視: 検知イベント (changeType: ETAG | LAST_MODIFIED | CONTENT_HASH | STATUS_CHANGE)
+model MonitorEvent {
+  id              String    @id @default(cuid())
+  pageId          String
+  page            MonitorPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  detectedAt      DateTime
+  changeType      String    // ETAG | LAST_MODIFIED | CONTENT_HASH | STATUS_CHANGE
+  oldValue        String?
+  newValue        String?
+  statusCode      Int?
+  titleGuess      String?
+  isReviewed      Boolean   @default(false)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewTokenHash String?
+  createdAt       DateTime  @default(now())
+}
