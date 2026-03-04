@@ -18,30 +18,72 @@ function sortAreaListByPrefecture(areas: string[]): string[] {
   return [...inOrder, ...rest];
 }
 
+/**
+ * 求人一覧用のデータ取得。
+ * 管理画面の「監視URL」（MonitorPage・有効のみ）を表示し、Job テーブルのダミーは使わない。
+ */
 export async function getJobs(opts?: { page?: number; area?: string }) {
   const page = opts?.page ?? 1;
-  const where: { area?: string } = {};
+  const where: { isActive: true; area?: string | null } = { isActive: true };
   if (opts?.area) where.area = opts.area;
 
-  const [items, total, areas] = await Promise.all([
-    prisma.job.findMany({
+  const [rows, total, areas] = await Promise.all([
+    prisma.monitorPage.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
       skip: (page - 1) * PER_PAGE,
       take: PER_PAGE,
+      select: {
+        id: true,
+        universityName: true,
+        url: true,
+        area: true,
+        updatedAt: true,
+      },
     }),
-    prisma.job.count({ where }),
-    prisma.job.findMany({ select: { area: true }, distinct: ['area'] }),
+    prisma.monitorPage.count({ where }),
+    prisma.monitorPage.findMany({
+      where: { isActive: true },
+      select: { area: true },
+      distinct: ['area'],
+    }),
   ]);
-  const rawAreas = areas.map((a) => a.area).filter((a) => a !== '関東');
+
+  const items = rows.map((r) => ({
+    id: r.id,
+    schoolName: r.universityName,
+    area: r.area ?? '',
+    officialUrl: r.url,
+    updatedAt: r.updatedAt,
+  }));
+
+  const rawAreas = areas.map((a) => a.area).filter((a): a is string => a != null && a !== '関東');
   const areaList = sortAreaListByPrefecture(rawAreas);
   return { items, total, totalPages: Math.ceil(total / PER_PAGE), page, areaList };
 }
 
+/** 求人詳細・サイトマップ用。監視URL（MonitorPage）の有効な1件を返す。 */
 export async function getJobById(id: string) {
-  return prisma.job.findUnique({ where: { id } });
+  const row = await prisma.monitorPage.findFirst({
+    where: { id, isActive: true },
+  });
+  if (!row) return null;
+  return {
+    id: row.id,
+    title: row.universityName,
+    schoolName: row.universityName,
+    area: row.area ?? '',
+    officialUrl: row.url,
+    updatedAt: row.updatedAt,
+    summary: null,
+    employmentType: null,
+  };
 }
 
+/** サイトマップ用。有効な監視URLの id 一覧。 */
 export async function getAllJobIds() {
-  return prisma.job.findMany({ select: { id: true } });
+  return prisma.monitorPage.findMany({
+    where: { isActive: true },
+    select: { id: true },
+  });
 }
