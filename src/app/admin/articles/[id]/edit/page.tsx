@@ -36,6 +36,7 @@ export default async function EditArticlePage({ params }: Props) {
     authorId: article.authorId,
     faq: article.faq || '[]',
     references: article.references || '[]',
+    externalUrl: article.externalUrl || '',
   };
 
   return (

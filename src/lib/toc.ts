@@ -5,6 +5,11 @@ export interface TocItem {
   level: number; // 2 = h2, 3 = h3
 }
 
+/** 全角＃を半角#に置換（Markdown見出しを正しく認識させる） */
+export function normalizeMarkdownHeadings(text: string): string {
+  return text.replace(/\uFF03/g, '#');
+}
+
 function slugifyHeadline(text: string): string {
   return (
     text
@@ -17,8 +22,9 @@ function slugifyHeadline(text: string): string {
 
 /** Markdownの見出しからTocItemを抽出（h2/h3のみ）。idはslug化して付与 */
 export function extractTocFromMarkdown(content: string): TocItem[] {
+  const normalized = normalizeMarkdownHeadings(content);
   const items: TocItem[] = [];
-  const lines = content.split('\n');
+  const lines = normalized.split('\n');
   let h2Index = 0;
   let h3Index = 0;
   for (const line of lines) {

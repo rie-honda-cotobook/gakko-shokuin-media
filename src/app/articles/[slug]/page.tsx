@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/repositories/article';
 import { Breadcrumbs, BreadcrumbJsonLd } from '@/components/Breadcrumbs';
 import { Toc } from '@/components/Toc';
-import { extractTocFromMarkdown } from '@/lib/toc';
+import { extractTocFromMarkdown, normalizeMarkdownHeadings } from '@/lib/toc';
 import { Markdown } from '@/components/Markdown';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -45,7 +45,9 @@ export default async function ArticlePage({ params }: Props) {
   if (!article) notFound();
 
   const related = await getRelatedArticles(article.id, 3);
-  const tocItems = extractTocFromMarkdown(article.content);
+  const isReference = !!article.externalUrl;
+  const contentNormalized = normalizeMarkdownHeadings(article.content);
+  const tocItems = isReference ? [] : extractTocFromMarkdown(contentNormalized);
   const faq: FaqItem[] = article.faq ? JSON.parse(article.faq) : [];
   const references: ReferenceItem[] = article.references ? JSON.parse(article.references) : [];
 
@@ -73,6 +75,9 @@ export default async function ArticlePage({ params }: Props) {
                 更新：{format(new Date(article.updatedAt), 'yyyy年M月d日', { locale: ja })}
               </span>
             )}
+            {isReference && (
+              <span className="ml-2 text-xs bg-stone-100 text-stone-600 px-2 py-0.5 rounded">外部記事を引用</span>
+            )}
           </p>
 
           <div className="mb-8">
@@ -83,9 +88,23 @@ export default async function ArticlePage({ params }: Props) {
             />
           </div>
 
+          {isReference ? (
+            <div className="mb-10">
+              {article.excerpt && <p className="text-stone-700 mb-6 whitespace-pre-wrap">{article.excerpt}</p>}
+              <a
+                href={article.externalUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-accent text-white px-8 py-4 rounded-xl font-semibold shadow-soft hover:bg-accent-dark hover:shadow-card-hover transition-all"
+              >
+                続きを読む（外部サイト）
+              </a>
+            </div>
+          ) : (
           <div className="prose-article mb-10">
-            <Markdown content={article.content} headingIds={tocItems} />
+            <Markdown content={contentNormalized} headingIds={tocItems} />
           </div>
+          )}
 
           {references.length > 0 && (
             <section className="mt-10 pt-6 border-t border-stone-200">
@@ -156,9 +175,11 @@ export default async function ArticlePage({ params }: Props) {
           </section>
         </div>
 
-        <aside className="md:order-first md:sticky md:top-24 md:self-start">
-          <Toc items={tocItems} />
-        </aside>
+        {!isReference && tocItems.length > 0 && (
+          <aside className="md:order-first md:sticky md:top-24 md:self-start">
+            <Toc items={tocItems} />
+          </aside>
+        )}
       </article>
 
       {/* Article + FAQ 構造化データ */}

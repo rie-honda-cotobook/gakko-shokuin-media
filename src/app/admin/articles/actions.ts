@@ -52,6 +52,8 @@ export type ArticleFormData = {
   authorId: string;
   faq: string;
   references: string;
+  /** 引用記事の場合：外部（WordPress等）のURL。あるときは本文の代わりにリンク先表示 */
+  externalUrl: string;
 };
 
 function parseJson<T>(s: string, fallback: T): T {
@@ -90,6 +92,7 @@ export async function createArticle(data: ArticleFormData): Promise<{ ok: boolea
       authorId: data.authorId,
       faq: data.faq.trim() ? data.faq.trim() : null,
       references: data.references.trim() ? data.references.trim() : null,
+      externalUrl: data.externalUrl?.trim() || null,
     },
   });
   revalidatePath('/');
@@ -133,6 +136,7 @@ export async function updateArticle(id: string, data: ArticleFormData): Promise<
       authorId: data.authorId,
       faq: data.faq.trim() ? data.faq.trim() : null,
       references: data.references.trim() ? data.references.trim() : null,
+      externalUrl: data.externalUrl?.trim() || null,
     },
   });
   revalidatePath('/');

@@ -27,7 +27,7 @@ model Article {
   title         String
   slug          String    @unique
   excerpt       String?
-  content       String    // Markdown
+  content       String    // Markdown（引用の場合は空可）
   status        String    @default("draft") // draft | scheduled | published
   publishedAt   DateTime?
   updatedAt     DateTime  @updatedAt
@@ -41,6 +41,7 @@ model Article {
   author        Author    @relation(fields: [authorId], references: [id], onDelete: Cascade)
   faq           String?   // JSON: [{q,a}]
   references    String?   // JSON: 参考リンクの配列
+  externalUrl   String?   // 引用記事の場合：外部（WordPress等）のURL。あるときは本文の代わりに「続きはこちら」表示
 }
 
 model Job {

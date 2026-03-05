@@ -27,6 +27,7 @@ const INIT: ArticleFormData = {
   authorId: '',
   faq: '[]',
   references: '[]',
+  externalUrl: '',
 };
 
 export function ArticleForm({
@@ -113,6 +114,47 @@ export function ArticleForm({
       </div>
 
       <div>
+        <label className="block text-sm font-medium text-stone-700 mb-2">記事の種類</label>
+        <div className="flex gap-6">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="articleType"
+              checked={!form.externalUrl}
+              onChange={() => setForm((f) => ({ ...f, externalUrl: '' }))}
+              className="rounded"
+            />
+            <span>直接作成（このサイトで本文を書く）</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="articleType"
+              checked={!!form.externalUrl}
+              onChange={() => setForm((f) => ({ ...f, externalUrl: f.externalUrl || 'https://' }))}
+              className="rounded"
+            />
+            <span>引用（外部サイトの記事へリンクする）</span>
+          </label>
+        </div>
+      </div>
+
+      {form.externalUrl ? (
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">外部URL（引用先）*</label>
+          <input
+            type="url"
+            value={form.externalUrl}
+            onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))}
+            placeholder="https://..."
+            className="w-full border border-stone-300 rounded px-3 py-2"
+          />
+          <p className="text-xs text-stone-500 mt-1">タイトル・要約はこのサイトに表示し、続きはこのURLへ誘導します。</p>
+        </div>
+      ) : null}
+
+      {!form.externalUrl && (
+      <div>
         <div className="flex justify-between items-center mb-1">
           <label className="block text-sm font-medium text-stone-700">本文（Markdown）</label>
           <button type="button" onClick={handleInsertTemplate} className="text-sm text-rose-800 hover:underline">
@@ -120,7 +162,7 @@ export function ArticleForm({
           </button>
         </div>
         <p className="text-xs text-stone-500 mb-2">
-          見出し: ## H2 / ### H3　ハイライト: &lt;mark&gt;文字&lt;/mark&gt;　アクセント色: &lt;span class=&quot;text-accent&quot;&gt;文字&lt;/span&gt;
+          見出し: ## H2 / ### H3（全角＃＃でも表示されます）　ハイライト: &lt;mark&gt;文字&lt;/mark&gt;　アクセント色: &lt;span class=&quot;text-accent&quot;&gt;文字&lt;/span&gt;
         </p>
         <textarea
           value={form.content}
@@ -129,6 +171,7 @@ export function ArticleForm({
           className="w-full border border-stone-300 rounded px-3 py-2 font-mono text-sm"
         />
       </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-stone-700 mb-1">著者 *</label>
